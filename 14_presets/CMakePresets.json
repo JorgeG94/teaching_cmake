@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Debug build with all checks enabled",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_ASSERTIONS": "ON",
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Optimized release build",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_ASSERTIONS": "OFF",
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "Release with Debug Info",
+      "description": "Optimized build with debug symbols for profiling",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ENABLE_ASSERTIONS": "OFF",
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "omp",
+      "displayName": "Debug with OpenMP",
+      "description": "Debug build with OpenMP enabled",
+      "inherits": "debug",
+      "cacheVariables": {
+        "ENABLE_OPENMP": "ON"
+      }
+    },
+    {
+      "name": "release-omp",
+      "displayName": "Release with OpenMP",
+      "description": "Optimized build with OpenMP",
+      "inherits": "release",
+      "cacheVariables": {
+        "ENABLE_OPENMP": "ON"
+      }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI Build",
+      "description": "Configuration for continuous integration",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_ASSERTIONS": "ON",
+        "BUILD_TESTING": "ON",
+        "ENABLE_OPENMP": "ON"
+      }
+    },
+    {
+      "name": "gnu",
+      "displayName": "GNU Compiler",
+      "description": "Build with GCC/gfortran",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "gfortran"
+      }
+    },
+    {
+      "name": "intel",
+      "displayName": "Intel Compiler",
+      "description": "Build with Intel ifx",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "ifx"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo"
+    },
+    {
+      "name": "omp",
+      "configurePreset": "omp"
+    },
+    {
+      "name": "release-omp",
+      "configurePreset": "release-omp"
+    },
+    {
+      "name": "ci",
+      "configurePreset": "ci"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ci",
+      "configurePreset": "ci",
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "my-local",
+      "displayName": "My Local Development",
+      "description": "Personal development settings (not committed to git)",
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/home/myuser/.local",
+        "CMAKE_PREFIX_PATH": "/opt/my-custom-libs",
+        "ENABLE_OPENMP": "ON"
+      },
+      "environment": {
+        "OMP_NUM_THREADS": "4"
+      }
+    },
+    {
+      "name": "my-hpc",
+      "displayName": "HPC Cluster Build",
+      "description": "Settings for the HPC cluster",
+      "inherits": "release-omp",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "/opt/intel/oneapi/compiler/latest/bin/ifx",
+        "CMAKE_PREFIX_PATH": "/opt/libs;/opt/openmpi"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# =============================================================================
+# mathlibConfig.cmake.in
+# =============================================================================
+# This is a template that CMake will process to create mathlibConfig.cmake
+# The @PACKAGE_INIT@ macro sets up path handling.
+#
+# This file is what find_package(mathlib) actually loads.
+# =============================================================================
+
+@PACKAGE_INIT@
+
+# Include the targets file which defines mathlib::mathlib
+include("${CMAKE_CURRENT_LIST_DIR}/mathlibTargets.cmake")
+
+# Check that all required components are present
+# (For simple libraries, this just checks the main target exists)
+check_required_components(mathlib)
+
+# =============================================================================
+# If your library has dependencies, find them here:
+# =============================================================================
+#
+# include(CMakeFindDependencyMacro)
+# find_dependency(OpenMP COMPONENTS Fortran)
+# find_dependency(BLAS)
+#
+# find_dependency() is like find_package() but properly handles REQUIRED
+# and QUIET from the original find_package(mathlib) call.
+# =============================================================================

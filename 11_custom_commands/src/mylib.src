@@ -1,0 +1,14 @@
+module mylib
+    implicit none
+    private
+    public :: greet
+
+contains
+
+    subroutine greet(name)
+        character(len=*), intent(in) :: name
+        ! This file is copied from .src to .f90 during build
+        print '(A, A, A)', "Hello, ", trim(name), "!"
+    end subroutine greet
+
+end module mylib
