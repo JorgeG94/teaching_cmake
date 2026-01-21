@@ -21,6 +21,7 @@ A progressive tutorial on using CMake for Fortran projects, from basics to advan
 | 13 | [Subdirectories](13_subdirectories/) | Organize large projects with `add_subdirectory()` |
 | 14 | [CMake Presets](14_presets/) | Standardized build configurations |
 | 15 | [test-drive + CTest](15_test_drive/) | Comprehensive unit testing with test-drive |
+| 16 | [C-Fortran Interop](16_c_fortran_interop/) | `iso_c_binding`, mixed-language projects |
 
 ## Quick Start
 

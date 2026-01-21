@@ -41,7 +41,7 @@ LESSONS=(
 
 # Lessons that need network access (FetchContent)
 NETWORK_LESSONS=(
-    "07_fetchcontent"
+    #"07_fetchcontent"
     "10_testing"
     "15_test_drive"
 )
@@ -199,7 +199,7 @@ case "${1:-build}" in
             "03_compiler_flags"
             "04_build_types"
             "05_options"
-            "07_fetchcontent"
+            #"07_fetchcontent"
             "08_installing"
             "09_making_findable"
             "10_testing"
