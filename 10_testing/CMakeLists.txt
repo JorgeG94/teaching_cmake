@@ -54,7 +54,7 @@ if(BUILD_TESTING)
 
     target_link_libraries(test_mathlib PRIVATE
         mathlib
-        test-drive::test-drive
+        test-drive
     )
 
     target_include_directories(test_mathlib PRIVATE
