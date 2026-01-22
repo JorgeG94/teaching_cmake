@@ -81,6 +81,8 @@ elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
     # ifx flags
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "NVHPC")
     # nvfortran flags
+else()
+  message(STATUS "OH NO! please add me to the compiler list!")
 endif()
 ```
 
