@@ -28,6 +28,7 @@ message(STATUS "Compiler Version: ${CMAKE_Fortran_COMPILER_VERSION}")
 message(STATUS "Compiler Path:    ${CMAKE_Fortran_COMPILER}")
 message(STATUS "")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # -----------------------------------------------------------------------------
 # Set compiler-specific flags
 # -----------------------------------------------------------------------------
