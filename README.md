@@ -48,6 +48,7 @@ cmake --build build
 2. **Know basics**: Skip to Lesson 06 (dependencies)
 3. **Library authors**: Focus on Lessons 08-09 (installing/findable)
 4. **CI/CD setup**: Jump to Lesson 14 (presets)
+5. **GPU programming**: Lessons 17-18 (NVHPC offloading, CUDA/HIP)
 
 ## Key Takeaways
 
