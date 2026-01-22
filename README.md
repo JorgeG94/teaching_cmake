@@ -22,6 +22,8 @@ A progressive tutorial on using CMake for Fortran projects, from basics to advan
 | 14 | [CMake Presets](14_presets/) | Standardized build configurations |
 | 15 | [test-drive + CTest](15_test_drive/) | Comprehensive unit testing with test-drive |
 | 16 | [C-Fortran Interop](16_c_fortran_interop/) | `iso_c_binding`, mixed-language projects |
+| 17 | [GPU Offloading (NVHPC)](17_gpu_offloading/) | OpenMP offloading, do concurrent with stdpar |
+| 18 | [CUDA/HIP Runtime](18_cuda_hip_runtime/) | Find and link CUDA or HIP runtimes |
 
 ## Quick Start
 
@@ -91,8 +93,16 @@ endif()
 These lessons are based on patterns from:
 - **metalquicha** - Fragmentation quantum chemistry
 - **GAMESS** - General Atomic and Molecular Electronic Structure System
+- **VAPAA** - Fortran implementation of the MPI fortran 2008 module 
 
-See the metalquicha CMakeLists.txt for a complete production example.
+See the [metalquicha](https://github.com/JorgeG94/metalquicha/) CMakeLists.txt for a complete production example.
+
+See [vapaa](https://github.com/JorgeG94/vapaa) for an example
+
+See my [modern fortan project repo](https://github.com/JorgeG94/modern-fortran-project)
+
+
+Some GPU things [here](https://github.com/JorgeG94/gpu-fortran/blob/main/CMakeLists.txt) and [here](https://github.com/JorgeG94/pic-device)
 
 ## Contributing
 
