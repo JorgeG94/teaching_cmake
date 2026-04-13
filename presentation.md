@@ -4,6 +4,13 @@
 
 ---
 
+## A Hitchhiker's Guide to Migrating from Make to CMake 
+
+- Jorge Luis Galvez Vallejo 
+  - NCI
+
+---
+
 ## About This Class
 
 - Duration: ~2 hours
@@ -1240,6 +1247,159 @@ Or organize so that your internal targets have project-specific names. The ALIAS
 
 ---
 
+# Interlude: Migrating from Make to CMake
+
+## The Migration Mindset
+
+You have a Makefile (or a shell script) that works. The goal is not to rewrite your code --- it is to **describe what you already have** in CMake's language. The source files do not change. The compiler does not change. Only the build description changes.
+
+This is a mechanical process, not a creative one. Here is the recipe.
+
+---
+
+## Step 1: Read Your Makefile
+
+Before writing any CMake, extract the information your Makefile already contains. Everything you need is in there.
+
+**From our heatmap `compile.sh`:**
+
+| What | Value |
+|------|-------|
+| Language | C |
+| Compiler | `gcc` (but we want this to be flexible) |
+| Flags | `-O2 -Wall` |
+| Include paths | `-I./include` |
+| Source files | `src/heatmap.c`, `src/main.c` |
+| Link libraries | `-lm` |
+| Output | `heatmap_sim` (executable) |
+
+**From our wave `Makefile`:**
+
+| What | Value |
+|------|-------|
+| Language | Fortran |
+| Compiler | `gfortran` (hardcoded) |
+| Flags | `-O2 -Wall -Wextra` |
+| Source files | `src/wave_solver.f90`, `src/main.f90` |
+| Module dependencies | `main.f90` depends on `wave_solver.f90` (manually tracked!) |
+| Output | `wave_sim` (executable) |
+
+---
+
+## Step 2: Identify Libraries vs Executables
+
+This is the key design decision. In a Makefile, everything gets compiled and linked into one binary. In CMake, you want to **separate the library from the executable**.
+
+Ask yourself: "If someone else wanted to use my code, which files would they need?"
+
+**heatmap:**
+- `src/heatmap.c` + `include/heatmap/heatmap.h` --- that is the library (reusable)
+- `src/main.c` --- that is just a driver program (not reusable)
+
+**wave:**
+- `src/wave_solver.f90` --- that is the library (the module that defines `WaveState`)
+- `src/main.f90` --- that is just a driver program
+
+This split does not exist in the Makefile. Creating it is the single biggest improvement you make during migration.
+
+---
+
+## Step 3: Write the Minimal CMakeLists.txt
+
+Start with the absolute minimum that builds the same thing your Makefile builds. Do not add install rules, presets, or export machinery yet. Get it building first.
+
+**heatmap --- first pass:**
+
+```cmake
+cmake_minimum_required(VERSION 3.21...3.31)
+project(heatmap VERSION 1.0.0 LANGUAGES C)
+
+add_library(heatmap src/heatmap.c)
+target_include_directories(heatmap PUBLIC include)
+target_link_libraries(heatmap PRIVATE m)
+
+add_executable(heatmap_sim src/main.c)
+target_link_libraries(heatmap_sim PRIVATE heatmap)
+```
+
+**wave --- first pass:**
+
+```cmake
+cmake_minimum_required(VERSION 3.21...3.31)
+project(wave VERSION 1.0.0 LANGUAGES Fortran)
+
+add_library(wave src/wave_solver.f90)
+
+add_executable(wave_sim src/main.f90)
+target_link_libraries(wave_sim PRIVATE wave)
+```
+
+That is it. Build it:
+
+```bash
+cmake -B build -G Ninja
+cmake --build build
+```
+
+If it compiles and runs, you have a working migration. Everything from here is improvement.
+
+---
+
+## Step 4: Translate Makefile Patterns to CMake
+
+Here is a cheat sheet for common Makefile patterns and their CMake equivalents:
+
+| Makefile | CMake |
+|----------|-------|
+| `CC = gcc` | Do not set --- CMake detects the compiler, or use presets |
+| `CFLAGS = -O2` | Build type: `cmake -B build -DCMAKE_BUILD_TYPE=Release` |
+| `CFLAGS += -Wall` | `target_compile_options(mylib PRIVATE -Wall)` |
+| `-I./include` | `target_include_directories(mylib PUBLIC include)` |
+| `-DUSE_MPI` | `target_compile_definitions(mylib PRIVATE USE_MPI)` |
+| `-L/path -lfoo` | `find_package(Foo REQUIRED)` + `target_link_libraries(mylib PRIVATE Foo::Foo)` |
+| `-lm` | `target_link_libraries(mylib PRIVATE m)` |
+| `%.o: %.c` pattern rules | Not needed --- CMake generates these automatically |
+| Manual `.mod` ordering | Not needed --- CMake tracks Fortran `use` dependencies |
+| `install: ...` with `cp` | `install(TARGETS ...)` + `install(DIRECTORY include/ ...)` |
+| `clean:` | Not needed --- `cmake --build build --target clean`, or just delete `build/` |
+
+---
+
+## Step 5: What NOT to Migrate
+
+Some things in your Makefile should **not** be carried over. They are either handled automatically by CMake or should be done differently:
+
+**Do not migrate:**
+- Compiler paths (`CC = /usr/bin/gcc-12`) --- use presets
+- Optimization flags (`-O2`, `-O3`) --- use `CMAKE_BUILD_TYPE` (Debug, Release, RelWithDebInfo)
+- Architecture flags (`-march=native`, `-gpu=cc80`) --- use presets
+- Manual dependency tracking (`main.o: solver.o`) --- CMake does this automatically
+- `clean` targets --- CMake provides them, or just `rm -rf build/`
+- Recursive Make patterns (`$(MAKE) -C subdir`) --- use `add_subdirectory(subdir)`
+
+**Do migrate:**
+- Which files are sources vs headers
+- Which external libraries are needed (`-lfoo` becomes `find_package`)
+- Preprocessor definitions that are genuinely needed
+- Any custom code generation steps (`add_custom_command`)
+
+---
+
+## Step 6: Add the Good Stuff
+
+Once the basic build works, layer on improvements in this order:
+
+1. **Presets** --- so you never type compiler paths again
+2. **Install rules** --- `install(TARGETS ...)`, `install(DIRECTORY include/ ...)`
+3. **Export rules** --- `install(EXPORT ...)`, `Config.cmake.in` so others can `find_package` you
+4. **Namespace alias** --- `add_library(heatmap::heatmap ALIAS heatmap)` for FetchContent
+5. **Tests** --- `enable_testing()`, `add_test()`
+6. **BUILD_INTERFACE / INSTALL_INTERFACE** --- so both consumption methods work
+
+This is exactly what we do in Part IV. The minimal CMakeLists.txt from Step 3 becomes the full example.
+
+---
+
 # Part IV: Making Your Package a Good Citizen
 
 ## The Goal
@@ -1991,4 +2151,4 @@ See: `skills/fix_my_cmake.md`
 - "It's Time To Do CMake Right" --- Pablo Arias
 - "Effective Modern CMake" --- Daniel Pfeifer (CppCon talk)
 - CMake Presets documentation: https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html
-- This presentation's repository: [TODO: add link]
+- This presentation's repository: https://github.com/JorgeG94/teaching_cmake
