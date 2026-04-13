@@ -1,0 +1,97 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_Fortran_COMPILER": "gfortran"
+      }
+    },
+    {
+      "name": "gcc-release",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_Fortran_COMPILER": "gfortran"
+      }
+    },
+    {
+      "name": "clang-debug",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "clang-release",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "intel-release",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "icx",
+        "CMAKE_CXX_COMPILER": "icpx",
+        "CMAKE_Fortran_COMPILER": "ifx"
+      }
+    },
+    {
+      "name": "nvhpc-release",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "nvc",
+        "CMAKE_CXX_COMPILER": "nvc++",
+        "CMAKE_Fortran_COMPILER": "nvfortran"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "intel-release",
+      "configurePreset": "intel-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug",
+      "output": {"outputOnFailure": true}
+    }
+  ]
+}
