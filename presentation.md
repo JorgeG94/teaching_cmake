@@ -14,8 +14,9 @@
 ## About This Class
 
 - Duration: ~2 hours
-- Target audience: Scientists and engineers writing C, C++, and Fortran code
-- Goal: Go from "it compiles on my laptop" to "anyone can build, install, and depend on my project"
+- Target audience: Scientists and engineers writing C, C++, and Fortran code that use Make as a build system or are starting to explore CMake
+- Goal: Understand the basics of CMake and how it compiles, installs, and creates dependencies for other programs. 
+        - Understand how to drive an effective migration from Make to CMake
 - Bonus: LLM-powered skills to automate CMake scaffolding
 
 ---
@@ -24,15 +25,19 @@
 
 ## What Is a Build System?
 
+### What Is a Build System?
+
 A build system automates the process of turning source code into runnable software. At its core, it answers three questions:
 
 1. **What** needs to be compiled? (which source files, in which order)
 2. **How** should it be compiled? (which compiler, which flags, which standards)
 3. **Where** do the results go? (executables, libraries, install locations)
 
+---
+
 ### Without a build system
 
-We have two small scientific projects that we will use as running examples throughout this class. Let's see how they are built today.
+We have two small scientific projects that we will use as running examples throughout this tutorial. Let's see how they are built today.
 
 **C project: 2D heat diffusion** (`compile.sh`)
 
@@ -64,7 +69,7 @@ FC = gfortran
 FFLAGS = -O2 -Wall -Wextra
 
 # Object files (ORDER MATTERS - wave_solver.f90 must compile first
-# because main.f90 uses the module. Forget this and watch it break.)
+# because main.f90 uses the module.) 
 OBJS = wave_solver.o main.o
 
 wave_sim: $(OBJS)
@@ -84,9 +89,11 @@ Better than a shell script --- Make tracks dependencies and does incremental bui
 
 Both projects work on the developer's machine. Neither is portable, installable, or consumable.
 
+---
+
 ### With a build system
 
-The build system tracks dependencies between files, recompiles only what changed, handles compiler detection, and produces consistent results across machines.
+The build system tracks dependencies between files, recompiles only what changed, handles compiler detection, and produces consistent results across machines. Additionally, certain build systems (like CMake) provide some of the only ways to do cross OS portable builds. 
 
 ### The landscape
 
@@ -97,7 +104,7 @@ The build system tracks dependencies between files, recompiles only what changed
 | **Meson** | Meta-build system | Python-based. Generates Ninja files. Clean syntax, gaining traction. |
 | **CMake** | Meta-build system | Generates native build files (Make, Ninja, VS, Xcode). Dominant in scientific computing. |
 
-The key distinction: **Make** is a build system (it runs compilers). **CMake** is a build system *generator* --- it produces Makefiles (or Ninja files, or IDE projects) that then run the compilers. You never call `gcc` from CMake.
+The key distinction: **Make** is a build system (it runs compilers). **CMake** is a build system *generator* --- it produces Makefiles (or Ninja files, or IDE projects) that then run the compilers.
 
 ---
 
@@ -129,7 +136,7 @@ cmake -G "Unix Makefiles" -B build
 | HPC ecosystem       | ---       | Legacy    | Rare   | Dominant |
 | find_package ecosystem | No     | No        | wrap   | Native |
 
-- Almost every major scientific library ships CMake support: HDF5, PETSc, Trilinos, deal.II, BLAS/LAPACK vendors
+- A lot of scientific libraries ship CMake support: HDF5, PETSc, Trilinos, deal.II, BLAS/LAPACK vendors
 - Fortran module dependency tracking is built in
 - CTest + CDash for testing infrastructure
 
@@ -137,7 +144,9 @@ cmake -G "Unix Makefiles" -B build
 
 ## Why Global State Is the Root of All Evil
 
-Before we look at old vs modern CMake, let's talk about **why** the old way is bad. This applies to programming in general, not just CMake.
+Before we look at old vs modern CMake, let's talk about **why** the old way is bad. 
+
+---
 
 ### The problem with globals in any language
 
@@ -161,7 +170,9 @@ def compute_field():
     pass
 ```
 
-Global state creates three problems:
+---
+
+### Global state creates three problems:
 
 1. **Invisible coupling**: Code depends on things that are not in its function signature. You cannot understand `solve()` by reading `solve()` alone.
 2. **Action at a distance**: Changing a global in file A breaks behavior in file Z, with no obvious connection between them.
@@ -188,6 +199,8 @@ Every `include_directories()`, `add_definitions()`, and `CMAKE_CXX_FLAGS` modifi
 - Tests that accidentally inherit production optimization flags
 - Subdirectories that break when you reorder `add_subdirectory()` calls
 - Dependencies that silently pollute your compile flags
+
+---
 
 ### The modern alternative: explicit, local, composable
 
@@ -219,13 +232,15 @@ A **target** is the central concept in modern CMake. It represents a single "thi
 
 Think of a target as a recipe card in a kitchen:
 
-- **Name**: "chocolate cake" (or `mylib`, `myapp`)
+- **Name**: "chocolate cake" (or `mycake`, `mycake`)
 - **Ingredients**: flour, sugar, eggs (or `solver.cpp`, `utils.f90`)
 - **Equipment needed**: oven at 180C (or `-O2`, `-std=c++17`)
 - **Depends on**: "make the frosting first" (or `target_link_libraries(cake PRIVATE frosting)`)
-- **What it produces**: a cake (or `libmylib.so`, `myapp`)
+- **What it produces**: a cake (or `libmycake.so`, `mycake`)
 
 The recipe card is self-contained. You can read it and know everything needed to make the cake. You do not need to check what the previous recipe did, or what the kitchen's "global oven temperature" is set to.
+
+---
 
 ### In CMake
 
@@ -233,7 +248,7 @@ Every target is created by one of these commands:
 
 ```cmake
 add_executable(myapp main.cpp)          # target "myapp" --- produces a binary
-add_library(mylib solver.cpp)           # target "mylib" --- produces a library
+add_library(mylib solver.cpp)           # target "mylib" --- produces a library (can be static, shared, or object)
 add_library(mylib INTERFACE)            # target "mylib" --- header-only, no compiled output
 ```
 
@@ -273,6 +288,8 @@ CMake does not just add `-lmylib` to the linker command. It propagates everythin
 
 This is what makes modern CMake composable. You describe each target once, and consumers automatically inherit the right settings through `target_link_libraries`. No manual flag passing. No global state.
 
+---
+
 ### Targets are not just libraries and executables
 
 CMake also creates **imported targets** when you find external packages:
@@ -299,7 +316,7 @@ We will cover target types in detail (STATIC, SHARED, OBJECT, INTERFACE, etc.) i
 ### Do NOT do this (pre-2014 CMake):
 
 ```cmake
-# WRONG - global state, pollutes everything
+# BAD! - global state, pollutes everything
 include_directories(${SOME_LIB_INCLUDE_DIRS})
 link_directories(${SOME_LIB_LIB_DIRS})
 add_definitions(-DUSE_MPI)
@@ -328,11 +345,14 @@ cmake_minimum_required(VERSION 3.21...3.31)
 
 - The minimum version sets the **policy defaults** --- this controls CMake's behavior
 - Version ranges (`3.21...3.31`) let you support older CMake while opting into new policies
-- In 2026, `3.21` is a reasonable floor:
+- In 2026, `3.28` is a reasonable floor:
   - Fortran module dependency scanning
   - `CMakePresets.json` v3
   - HIP language support
   - Better `install(TARGETS)` defaults
+- This should always be the first line of CMake in any top level CMakeList 
+
+---
 
 ### What is a policy?
 
@@ -367,7 +387,7 @@ A program you can run. Sources are compiled and linked into a binary.
 add_library(mylib STATIC solver.cpp matrix.cpp)
 ```
 
-An archive (`.a` / `.lib`). Code is copied into the final executable at link time. No runtime dependency. Preferred on HPC compute nodes where you want a single self-contained binary.
+An archive (`.a` / `.lib`). Code is copied into the final executable at link time. No runtime dependency.
 
 ### Shared Library
 
@@ -492,6 +512,8 @@ add_library(io writer.cpp)
 target_link_libraries(io PRIVATE project_defaults)
 ```
 
+---
+
 This is a common pattern in larger projects to avoid repeating the same 10 lines of `target_*` calls on every target.
 
 **Use case 3: Fortran module-only packages.** Some Fortran packages provide only `.mod` files (module interfaces) with no compiled code --- the consumer compiles against the module definitions. An INTERFACE library is the natural fit.
@@ -573,6 +595,8 @@ target_compile_definitions(mylib INTERFACE USING_MYLIB)
 
 Generator expressions are evaluated at **generate time** (when CMake writes the build files), not at configure time. They look like `$<...>` and are essential for writing CMake that works in multiple contexts.
 
+These can get messy and some people prefer to avoid them, they are powerful but to each their own, I guess.
+
 ### Why do we need them?
 
 Because some information depends on the context. An include path is different during build vs after install. A compile flag depends on which compiler is being used. These things are not known until generate time.
@@ -605,6 +629,8 @@ target_compile_definitions(mylib
 )
 ```
 
+---
+
 #### Conditional on compiler
 
 ```cmake
@@ -616,6 +642,8 @@ target_compile_options(mylib
 )
 ```
 
+---
+
 #### Conditional on language
 
 ```cmake
@@ -625,6 +653,8 @@ target_compile_options(mylib
     $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
 )
 ```
+
+---
 
 #### TARGET_EXISTS (check before linking)
 
@@ -662,6 +692,8 @@ include(CheckFortranSourceCompiles) # Compiler feature checks
 include(CTest)                  # Enable testing support
 ```
 
+---
+
 ### Find modules (Find<Package>.cmake)
 
 CMake ships many, and you can write your own:
@@ -674,6 +706,10 @@ find_package(MyLib REQUIRED)    # Looks for FindMyLib.cmake or MyLibConfig.cmake
 Search order for `find_package(Foo)`:
 1. `FooConfig.cmake` (or `foo-config.cmake`) --- **Config mode** (preferred, provided by the package)
 2. `FindFoo.cmake` --- **Module mode** (provided by CMake or the consumer in their `cmake/` dir)
+
+These are case sensity, if you want to find BLAS your package should be BLASConfig.cmake, "blas" won't get picked up.
+
+---
 
 ### Custom utility modules
 
@@ -704,12 +740,10 @@ set_project_warnings(mylib)
 
 ### Writing a Find module: FindMyPackage.cmake
 
-When a third-party library does **not** ship a Config.cmake, you write a Find module for it. This goes in your project's `cmake/` directory.
-
+When a third-party library does **not** ship a Config.cmake, you can write a Find module for it. This goes in your project's `cmake/` directory.
 ```cmake
 # cmake/FindSuperLU.cmake
 # Finds the SuperLU library (does not ship its own CMake config)
-
 find_path(SuperLU_INCLUDE_DIR
   NAMES slu_ddefs.h
   HINTS
@@ -717,7 +751,6 @@ find_path(SuperLU_INCLUDE_DIR
     ENV SuperLU_ROOT
   PATH_SUFFIXES include include/superlu
 )
-
 find_library(SuperLU_LIBRARY
   NAMES superlu
   HINTS
@@ -725,12 +758,10 @@ find_library(SuperLU_LIBRARY
     ENV SuperLU_ROOT
   PATH_SUFFIXES lib lib64
 )
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SuperLU
   REQUIRED_VARS SuperLU_LIBRARY SuperLU_INCLUDE_DIR
 )
-
 if(SuperLU_FOUND AND NOT TARGET SuperLU::SuperLU)
   add_library(SuperLU::SuperLU UNKNOWN IMPORTED)
   set_target_properties(SuperLU::SuperLU PROPERTIES
@@ -739,6 +770,8 @@ if(SuperLU_FOUND AND NOT TARGET SuperLU::SuperLU)
   )
 endif()
 ```
+---
+
 
 Now consumers do:
 
@@ -757,7 +790,7 @@ Key points:
 
 ## CMake Presets
 
-`CMakePresets.json` at the project root --- **essential for reproducibility on HPC**. Full example in `examples/CMakePresets.json`. The key ideas:
+`CMakePresets.json` at the project root --- **a covenient tool for reproducibility on HPC**. Full example in `examples/CMakePresets.json`. The key ideas:
 
 ```json
 {
@@ -785,6 +818,8 @@ Key points:
   ]
 }
 ```
+
+---
 
 ### Preset inheritance
 
@@ -815,6 +850,8 @@ Developers can create `CMakeUserPresets.json` (gitignored) for machine-specific 
   ]
 }
 ```
+---
+
 
 ### Usage
 
@@ -852,6 +889,10 @@ CMake guarantees:
 
 For Fortran, this matters even more: if `io.f90` does `use core_module`, CMake detects the module dependency and ensures `core` compiles first (so the `.mod` file exists). This is the problem our Makefile solved manually --- CMake solves it automatically.
 
+It is not failure proof. A very large project with a lot of files and inter-module dependencies can run into race conditions when built in parallel
+
+---
+
 ### Explicit ordering without linking
 
 Sometimes you need target A to build before target B, but they do not link to each other:
@@ -881,6 +922,9 @@ add_custom_command(
   COMMENT "Generating config.h"
 )
 ```
+
+---
+
 
 Key points:
 - `OUTPUT`: the file(s) this command produces. CMake uses this to track dependencies --- if a target needs `config.h`, this command runs automatically.
@@ -917,6 +961,8 @@ Common uses:
 - Running code formatters (`clang-format`, `fprettify`)
 - Generating documentation
 
+---
+
 ### Fortran-specific: preprocessing `.F90` files
 
 Fortran files with uppercase extensions (`.F90`) are run through the C preprocessor before compilation. CMake handles this automatically. But if you have a custom preprocessing step:
@@ -939,7 +985,9 @@ add_library(solver "${CMAKE_CURRENT_BINARY_DIR}/generated_solver.f90")
 
 ## Cross-Compilation and Architectures
 
-On HPC, you often compile on a login node for a different architecture (compute nodes, GPU accelerators). CMake handles this with **toolchain files**.
+On a cluster, you often compile on a login node for a different architecture (compute nodes, GPU accelerators). CMake handles this with **toolchain files**.
+
+These are way more common in enterprise type software and/or games. However, that doesn't make them unsuited for HPC.
 
 ### Toolchain files
 
@@ -964,6 +1012,8 @@ Usage:
 cmake -B build --toolchain toolchain-cray.cmake
 ```
 
+---
+
 Or in a preset:
 
 ```json
@@ -973,6 +1023,8 @@ Or in a preset:
   "toolchainFile": "${sourceDir}/cmake/toolchain-cray.cmake"
 }
 ```
+
+---
 
 ### GPU offloading (OpenMP, OpenACC, CUDA)
 
@@ -994,6 +1046,8 @@ target_compile_options(solver
     $<$<Fortran_COMPILER_ID:NVHPC>:-mp=gpu -gpu=cc80>
 )
 ```
+
+---
 
 ### Architecture-specific flags --- use presets, not CMakeLists.txt
 
@@ -1042,6 +1096,8 @@ find_package(LAPACK REQUIRED)
 target_link_libraries(mylib PRIVATE BLAS::BLAS LAPACK::LAPACK)
 ```
 
+---
+
 ### MPI
 
 ```cmake
@@ -1049,6 +1105,8 @@ find_package(MPI REQUIRED COMPONENTS C CXX Fortran)
 
 target_link_libraries(mylib PUBLIC MPI::MPI_Fortran)
 ```
+
+---
 
 ### HDF5
 
@@ -1102,6 +1160,8 @@ This works because `fmt` has a proper CMake install/export setup. **Your project
 
 When you use `FetchContent` or `add_subdirectory` to pull in another CMake project, both projects run in the **same CMake scope**. Their cache variables, options, and targets all share a single flat namespace. This leads to one of the most common and frustrating problems in multi-project CMake builds.
 
+---
+
 ### The disaster
 
 Suppose you are building a simulation that depends on both our example projects:
@@ -1131,6 +1191,8 @@ FetchContent_Declare(heatmap ...)
 FetchContent_Declare(wave ...)
 FetchContent_MakeAvailable(heatmap wave)
 ```
+
+---
 
 Now you run:
 
@@ -1176,6 +1238,8 @@ option(WAVE_BUILD_TESTS "Build wave tests" ON)
 option(WAVE_BUILD_DOCS "Build wave documentation" OFF)
 option(WAVE_USE_OPENMP "Enable OpenMP in wave" OFF)
 ```
+
+---
 
 Now the consumer has full control:
 
@@ -1232,6 +1296,8 @@ add_library(heatmap::utils ALIAS heatmap_utils)
 ```
 
 Or organize so that your internal targets have project-specific names. The ALIAS with namespace lets consumers use the clean `heatmap::utils` name.
+
+---
 
 ### Summary of namespace hygiene rules
 
@@ -1321,6 +1387,8 @@ target_link_libraries(heatmap PRIVATE m)
 add_executable(heatmap_sim src/main.c)
 target_link_libraries(heatmap_sim PRIVATE heatmap)
 ```
+
+---
 
 **wave --- first pass:**
 
@@ -1417,6 +1485,8 @@ find_package(heatmap REQUIRED)
 target_link_libraries(myapp PRIVATE heatmap::heatmap)
 ```
 
+---
+
 ### Option B: FetchContent
 
 ```cmake
@@ -1501,6 +1571,11 @@ endif()
 add_library(heatmap
   src/heatmap.c
 )
+```
+
+---
+
+```cmake
 add_library(heatmap::heatmap ALIAS heatmap)
 
 target_include_directories(heatmap
@@ -1562,6 +1637,10 @@ configure_package_config_file(
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/heatmap
 )
 
+```
+
+---
+```cmake
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/heatmapConfigVersion.cmake"
   VERSION ${PROJECT_VERSION}
