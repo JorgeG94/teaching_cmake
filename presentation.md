@@ -11,6 +11,20 @@
 
 ---
 
+## Acknowledgement of Country 
+
+ANU acknowledgment of country
+
+The Australian National University (ANU) acknowledges the Ngunnawal and Ngambri-Kamberri people, who are the Traditional Owners of the land upon which the University’s Acton campus is located.
+
+This Ngunnawal and Ngambri-Kamberri land supports students and staff throughout their time at ANU. It will continue to hold a space for future generations to come together and learn from Country and one another.
+
+We pay our respects to all Aboriginal and Torres Strait Islander peoples, Indigenous peoples, past, present and future, and acknowledge that this land from which we benefit has an ancient history that is both rich and sacred.
+
+The ANU community makes a commitment to always respect the land upon which we stand and to ensure that the voices of this land’s Indigenous peoples are both heard and listened to so that we may move towards a future marked by cooperation and mutual respect.
+
+---
+
 ## About This Class
 
 - Duration: ~2 hours

@@ -122,6 +122,34 @@ Overall: <one-line summary>
 [genuine praise for things done well --- this section is mandatory]
 ```
 
+## Output File
+
+After completing the roast, **write the full report to `.cmake_roast_report.md`** in the repository root. This file will be read by `/fix_my_cmake` to automatically apply fixes.
+
+The report must include a machine-parseable `## Fixes` section at the end:
+
+```markdown
+## Fixes
+
+Each fix below can be applied by `/fix_my_cmake`.
+
+### Fix 1
+- **File**: `path/to/CMakeLists.txt`
+- **Line**: 42
+- **Severity**: CURSED | BAD | MEH
+- **Find**: `include_directories(${SOME_INCLUDE})`
+- **Replace**: `target_include_directories(mylib PRIVATE ${SOME_INCLUDE})`
+- **Explanation**: Use target-specific commands instead of global state.
+
+### Fix 2
+...
+```
+
+After writing the report, tell the user:
+1. Where the report was saved (`.cmake_roast_report.md`)
+2. The overall score summary
+3. That they can run `/fix_my_cmake` to automatically apply the fixes
+
 ## Rules
 
 - Read every CMake file before forming opinions --- do not roast based on a single file if there are multiple
@@ -130,3 +158,4 @@ Overall: <one-line summary>
 - The roast should be fun but the fixes should be production-quality
 - Prioritize issues by impact: installability and exportability problems are worse than style issues
 - If there is no CMake at all, do not roast --- suggest running `/add_cmake_build_system` instead
+- Always write the report to `.cmake_roast_report.md` so `/fix_my_cmake` can consume it

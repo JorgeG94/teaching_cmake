@@ -2,6 +2,30 @@
 
 Diagnose and fix CMake build errors in the current repository. This skill handles configure errors, build errors, link errors, find_package failures, and install/export issues.
 
+It also reads the roast report from `/roast_my_cmake` and applies fixes automatically.
+
+## Step 0: Check for Roast Report
+
+**First**, check if `.cmake_roast_report.md` exists in the repository root.
+
+### If the roast report exists
+
+1. Read the report and parse the `## Fixes` section
+2. For each fix:
+   - Read the target file
+   - Find the code specified in **Find**
+   - Replace it with the code specified in **Replace**
+   - Log the fix as applied
+3. After applying all fixes, verify the build (see Step 3)
+4. Update the report: add a `## Applied` section at the top listing what was fixed and when
+5. Tell the user what was fixed
+
+### If the roast report does not exist
+
+Proceed to Step 1 to diagnose issues directly.
+
+---
+
 ## Step 1: Identify the Problem
 
 Ask the user what is happening, or check for yourself:
@@ -159,3 +183,5 @@ After fixing, briefly explain:
 - Do not add `-Wno-*` flags to silence compiler warnings without understanding what they warn about
 - If the project has no install/export rules and that is causing the consumer error, explain that the fix is to add them (not to hack around the consumer side) and suggest running `/add_cmake_build_system`
 - If a `find_package` fails and the library genuinely is not installed, say so --- do not generate a fake Find module that pretends to find it
+- After applying fixes from the roast report, update `.cmake_roast_report.md` with an `## Applied` section so running `/fix_my_cmake` again doesn't re-apply the same fixes
+- If all fixes have been applied and the build passes, tell the user they can delete `.cmake_roast_report.md`
